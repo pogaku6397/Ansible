@@ -33,9 +33,9 @@
       url: "{{item}}"
       status_code: 403
     with_items:
-      - http://3.27.1.190:8080
-      - http://3.26.213.178:8080
-      - http://3.27.8.82:8080
+      - http://3.27.78.229:8080
+      - http://54.206.71.90:8080
+      - http://54.153.170.244:8080
   - name: Get Jenkins admin password
     become: yes
     shell: cat /var/lib/jenkins/secrets/initialAdminPassword

@@ -1,0 +1,36 @@
+---
+- name: Install Jenkins on EC2 instance
+  hosts: all
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Update the instance package index
+      become: yes
+      package:
+        name: python3-pip
+        state: latest
+        
+    - name: Install Java 11.0.16
+      become: yes
+      shell: |
+        sudo apt-get update
+        sudo apt-get install -y openjdk-11-jdk-headless
+        
+    - name: Add Jenkins repository
+      become: yes
+      shell: |
+        wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+        sudo sh -c 'echo deb https://pkg.jenkins.io/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
+        
+    - name: Install Jenkins
+      become: yes
+      shell: |
+        sudo apt-get update
+        sudo apt-get install -y jenkins
+        
+    - name: Start Jenkins service
+      become: yes
+      service:
+        name: jenkins
+        state: started
+

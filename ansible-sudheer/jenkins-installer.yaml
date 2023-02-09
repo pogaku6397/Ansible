@@ -1,0 +1,80 @@
+- name: Install Jenkins on EC2
+  hosts: all
+  become: yes
+  gather_facts: false
+  # vars_files:
+  #   - jenkins-installer-vars.yml
+  tasks:
+  - name: Include variables
+    include_vars:
+      file: variable_file.yml
+  - name: Obtaining the jenkins key
+    become: yes
+    shell: |
+      sudo yum remove java-1.*
+      sudo yum remove -y jenkins
+      sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+      sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - name: Installing Java
+    become: yes 
+    shell: |
+      sudo amazon-linux-extras install java-openjdk11 -y
+  - name: Installing jenkins
+    become: yes
+    shell: |
+      sudo yum install jenkins -y
+  - name: Enabling jenkins service
+    become: yes
+    shell: |
+      sudo systemctl enable jenkins
+  - name: Starting jenkins service
+    become: yes
+    shell: |
+      sudo systemctl start jenkins
+  - name: Check url response
+    uri:
+      url: "http://{{item}}:8080"
+      status_code: 403
+    with_items: "{{ lookup('file', '/home/ec2-user/venv/ansible-sudheer/vars.txt') | split('\n') }}"
+      # - 3.27.1.190
+      # - 3.26.213.178
+      # - 3.27.8.82
+  - name: Get Jenkins admin password
+    become: yes
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: jenkins_password
+  - name: Show Jenkins admin password
+    debug:
+      var: jenkins_password.stdout_lines
+  - name: Showing jenkins password
+    debug:
+      var: jenkins_admin_password
+    vars:
+      jenkins_admin_password: "{{ jenkins_password.stdout_lines }}"
+  - name: Get Jenkins Crumb
+    uri:
+      url: http://{{item}}:8080/crumbIssuer/api/xml
+      user: admin
+      password: "{{jenkins_admin_password}}"
+      method: GET
+      return_content: yes
+    register: crumb_response
+    vars:
+      jenkins_admin_password: "{{ jenkins_password.stdout_lines }}"
+    with_items: "{{ lookup('file', '/home/ec2-user/venv/ansible-sudheer/vars.txt') | split('\n') }}"
+    ignore_errors: yes
+  - name: Login to Jenkins Unlock Page
+    uri:
+      url: http://{{item}}:8080/j_acegi_security_check
+      method: POST
+      headers:
+        "{{ crumb_response.content | from_xml | dict2items }}"
+      body: "j_username=admin&j_password={{jenkins_admin_password}}"
+      return_content: yes
+    vars:
+      jenkins_admin_password: "{{ jenkins_password.stdout_lines }}"
+    register: response
+    with_items: "{{ lookup('file', '/home/ec2-user/venv/ansible-sudheer/vars.txt') | split('\n') }}"
+  - name: Display Response
+    debug:
+      var: response

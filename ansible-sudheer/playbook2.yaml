@@ -1,0 +1,7 @@
+- name: Install tree
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Add the tree
+      yum: name=tree state=present

@@ -1,0 +1,34 @@
+---
+- name: Install Jenkins on EC2
+  hosts: all
+  become: yes
+  tasks:
+    - name: Add Jenkins repository
+      command: wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+
+    - name: Import Jenkins repository key
+      command: rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+
+    - name: Install Java
+      shell: amazon-linux-extras install java-openjdk11
+      register: java_install
+    
+    - name: Install Jenkins
+      shell: amazon-linux-extras install jenkins
+      register: jenkins_install
+
+    - name: Start Jenkins service
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Check Jenkins service status
+      shell: systemctl status jenkins
+      register: jenkins_status
+      changed_when: jenkins_install.rc != 0
+
+    - name: Display Jenkins status
+      debug:
+        var: jenkins_status.stdout_lines
+

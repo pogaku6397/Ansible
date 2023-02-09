@@ -1,0 +1,49 @@
+- name: Install Jenkins on EC2
+  hosts: all
+  become: yes
+  gather_facts: false
+  # vars_files:
+  #   - jenkins-installer-vars.yml
+  tasks:
+  - name: Obtaining the jenkins key
+    become: yes
+    shell: |
+      sudo yum remove java-1.*
+      sudo yum remove -y jenkins
+      sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+      sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - name: Installing Java
+    become: yes 
+    shell: |
+      sudo amazon-linux-extras install java-openjdk11 -y
+  - name: Installing jenkins
+    become: yes
+    shell: |
+      sudo yum install jenkins -y
+  - name: Enabling jenkins service
+    become: yes
+    shell: |
+      sudo systemctl enable jenkins
+  - name: Starting jenkins service
+    become: yes
+    shell: |
+      sudo systemctl start jenkins
+  - name: Check url response
+    uri:
+      url: "{{item}}"
+      status_code: 403
+    with_items:
+      - http://3.27.1.190:8080
+      - http://3.26.213.178:8080
+      - http://3.27.8.82:8080
+  - name: Get Jenkins admin password
+    become: yes
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: jenkins_password
+    # vars:
+    #   Slave1: http://13.239.15.37:808
+    #   Slave2: http://3.25.252.47:8080
+    #   Slave3: http://3.26.104.205:8080
+  - name: Show Jenkins admin password
+    debug:
+      var: jenkins_password.stdout_lines

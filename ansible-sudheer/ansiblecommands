@@ -1,0 +1,11 @@
+ansible -i inventory all –m shell –a ‘sh get-docker.sh’
+ansible all -i inventory -m user -a 'name=sudheer password=jenkins' –b   //working
+ansible all -i inventory -m file -a 'name=/tmp/file14 state=touch'
+ansible all -i inventory -m file -a 'name=/tmp/file14 state=directory’
+ansible all -i inventory -m file -a 'name=/tmp/file14 state=touch'
+ansible slave1 -i inventory -m file -a 'name=/tmp/mydir state=directory'
+ansible all -i inventory -m file -a 'name=/tmp/mydir state=directory'
+ansible slaves -i inventory -m file -a 'name=/tmp/mydir state=directory'
+ansible slaves -i inventory -m file -a 'name=/tmp/mydir state=absent’
+ansible slaves -i inventory -m file -a 'name=/tmp/slave1 state=absent'		//removes the directory
+

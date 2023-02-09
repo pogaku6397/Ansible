@@ -1,0 +1,11 @@
+name: Install Jenkins on EC2
+hosts: all
+become: yes
+gather_facts: false
+
+tasks:
+- name: Install Java 11.0.16
+  become: yes
+  shell: |
+    sudo apt-get update
+    sudo apt-get install -y openjdk-11-jdk-headless

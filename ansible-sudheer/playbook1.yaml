@@ -1,0 +1,12 @@
+- name: Create a user on all the managed nodes
+  hosts: all
+  tasks:
+   - name: user creation 
+     user: 
+      name: User1Dec06
+      password: jenkins
+      uid: 1202
+      home: /tmp/user1
+      shell: /bin/bash
+      comment: "normal user"
+

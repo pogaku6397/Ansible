@@ -1,0 +1,59 @@
+- name: Install Jenkins on EC2
+  hosts: all
+  become: yes
+  gather_facts: false
+
+  tasks:
+  - name: Install Java 11.0.16
+    become: yes
+    shell: |
+      sudo yum -y install java-1.8.0-openjdk
+  - name: Set Java as the default Java version
+    lineinfile:
+      path: /etc/environment
+      line: 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-11.0.16.0.8-1.amzn2.0.1.x86_64/"'
+      state: present
+  - name: select respective java version
+    become: yes
+    shell: |
+        sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/java-11-openjdk-amd64/bin/java" 1
+        sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-11.0.16.0.8-1.amzn2.0.1.x86_64/bin/java
+  - name: Download Jenkins
+    become: yes
+    shell: |
+          wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+          rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+          yum install -y jenkins
+  - name: Start Jenkins on port 8081
+    lineinfile:
+      dest: /etc/sysconfig/jenkins
+      regexp: 'HTTP_PORT=.*'
+      line: 'HTTP_PORT=8081'
+  - name: Restart Jenkins
+    service:
+      name: jenkins
+      state: restarted
+    become: yes
+    become_user: root
+  - name: Check url response
+    uri:
+      url: "{{item}}"
+      status_code: 403
+    with_items:
+      - http://13.239.15.37:8081      
+  - name: install the CLI for Jenkins
+    become: yes
+    shell: |
+        cd /usr/share/jenkins/ 
+        curl -O http://13.239.15.37:8081/jnlpJars/jenkins-cli.jar 
+        chmod 777 jenkins-cli.jar
+  - name: Get Jenkins admin password
+    become: yes
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: jenkins_password
+    vars:
+      slave1: 13.239.15.37
+  - name: Show Jenkins admin password
+    debug:
+      var: jenkins_password.stdout_lines
+

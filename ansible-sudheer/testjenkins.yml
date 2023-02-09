@@ -1,0 +1,41 @@
+---
+- name: Install Jenkins on EC2
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Install Java 11.0.16
+      become: yes
+      shell: |
+       sudo apt-get update
+       sudo apt-get install -y openjdk-11-jdk-headless
+    - name: Set environment variables for Java
+      lineinfile:
+        path: /etc/environment
+        line: 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"'
+        state: present
+        
+    - name: Set Java as the default Java version
+      become: yes
+      lineinfile:
+        path: /etc/environment
+        line: 'JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"'
+        state: present
+      shell: |
+        sudo update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/java-11-openjdk-amd64/bin/java"
+        sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+
+    - name: Download Jenkins
+      become: yes
+      shell: |
+        wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+        rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+        yum install -y jenkins
+
+    - name: Start Jenkins
+      become: yes
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+

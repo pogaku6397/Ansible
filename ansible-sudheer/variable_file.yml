@@ -1,0 +1,4 @@
+variable_file:
+- slave1: 3.27.1.190
+- slave2: 3.26.213.178
+- slave3: 3.27.8.82
